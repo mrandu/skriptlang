@@ -1,0 +1,98 @@
+# Beaconflight 0.1a by MrAndu
+# Requires:
+# Skript itselt to run this [ https://github.com/SkriptLang/Skript/releases ]
+# You'll need skellett for checking potion effects [ https://www.spigotmc.org/resources/skript-java-addon-skellett.34361/ ]
+# You'll need skquery for loop-player clauses [ https://www.spigotmc.org/resources/skquery-1-9-1-16.36631/ ]
+
+# options are currently not used but let's have it as a placeholder
+options:
+		Prefix: &0[&e&lFlight&0]
+
+# set some default variables  
+variables:
+	{flight.enabled.%player%} = yes
+	{flight.mode.%player%} = no
+
+# on load let the consloe know we have this enabled
+On Load:
+	send "Beaconflight - made by MrAndu" to console
+
+# on join let the players know how to disable this if they want to	
+on join:
+	wait 20 ticks
+	message "&5Flight mode around beacons can be disabled with '/bf off' command" to player
+	if player's gamemode is survival:
+		set {flight.mode.%player%} to no
+
+# every 5 seconds we check if player is in survival mode, if they are we check if they have a haste effect (haste can only come from beacons)
+# if the player has haste  we allow them to fly and set ly enabled as variable so we can keep track and skip if player has disabled it
+# if the player does not have haste we take away their fly ability
+	
+every 5 seconds in "Risa":
+	loop all players:
+		if loop-player's gamemode is survival:
+			if loop-player has haste:
+				if {flight.enabled.%loop-player%} is yes:
+					if {flight.mode.%loop-player%} is not yes:
+						set {flight.mode.%loop-player%} to yes
+						flyenable(loop-player)						
+				else:
+					if {flight.mode.%loop-player%} is yes:
+						set {flight.mode.%loop-player%} to no
+						disallow fly for loop-player
+			else:
+				if {flight.mode.%loop-player%} is yes:
+					if {flight.enabled.%loop-player%} is yes:
+						set {flight.mode.%loop-player%} to no
+						flydisable(loop-player)
+					else:
+						set {flight.mode.%loop-player%} to no
+						disallow fly for loop-player
+		else:
+			set {flight.mode.%loop-player%} to no
+
+# if players teleport (portals, beds, /home or /warp commands etc) we take away fly ability to somewhat reduce exploitability
+		
+on player teleport:
+	if player's gamemode is survival:
+		if {flight.mode.%player%} is yes:
+			remove haste from player
+			set {flight.mode.%player%} to no
+			flydisable(player)
+
+# we defina our own command syntax to allow players to disable fly mode entirely, some players prefer not to use it or it gets annoying with elytras
+			
+command /bf [<boolean>]:
+	description: Enable fly mode around beacons
+	executable by: players
+	usage: usage: /bf <on/off>
+	trigger:
+		argument 1 is yes:
+			message "&7Fly mode around beacons is now &2enabled&7 for you" to player
+			set {flight.enabled.%player%} to yes
+			if player has haste:
+				set {flight.mode.%player%} to yes
+				flyenable(player)
+		argument 1 is no:
+			message "&7Fly mode around beacons is now &4disabled&7 for you" to player
+			set {flight.enabled.%player%} to no
+			set {flight.mode.%player%} to no
+			flydisable(player)
+		argument 1 is not set:
+			message "usage: /bf <on/off>" to player
+			if {flight.enabled.%player%} is on:
+				message "currently &2ON" to player
+			else:
+				message "currently &7OFF" to player
+
+# some helper functions to reduce duplicate code, same function is used many times througout the code
+
+function flyenable(p: player):
+	message "&7You have &2gained&7 flight mode!" to {_p}
+	play sound "entity.experience_orb.pickup" with volume 0.5 and pitch -3 at {_p} for {_p}
+	allow fly for {_p}
+
+function flydisable(p: player):
+	message "&7flight mode was &4taken&7 from you!" to {_p}
+	play sound "item.trident.return" with volume 0.5 and pitch 1 at {_p} for {_p}
+	disallow fly for {_p}
