@@ -3,6 +3,7 @@
 # Skript itselt to run this [ https://github.com/SkriptLang/Skript/releases ]
 # You'll need skellett for checking potion effects [ https://www.spigotmc.org/resources/skript-java-addon-skellett.34361/ ]
 # You'll need skquery for loop-player clauses [ https://www.spigotmc.org/resources/skquery-1-9-1-16.36631/ ]
+# made for skript version 2.4 but tested and works with 2.5.1
 
 # options are currently not used but let's have it as a placeholder
 options:
@@ -60,7 +61,7 @@ on player teleport:
 			set {flight.mode.%player%} to no
 			flydisable(player)
 
-# we defina our own command syntax to allow players to disable fly mode entirely, some players prefer not to use it or it gets annoying with elytras
+# we define our own command syntax to allow players to disable fly mode entirely, some players prefer not to use it or it gets annoying with elytras
 			
 command /bf [<boolean>]:
 	description: Enable fly mode around beacons
